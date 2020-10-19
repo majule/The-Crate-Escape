@@ -9,11 +9,11 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 50114502278770351, guid: a60be7148c26a524aaf13557b314717b, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: 5.5
       objectReference: {fileID: 0}
     - target: {fileID: 50114502278770351, guid: a60be7148c26a524aaf13557b314717b, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0
+      value: 5.5
       objectReference: {fileID: 0}
     - target: {fileID: 50114502278770351, guid: a60be7148c26a524aaf13557b314717b, type: 3}
       propertyPath: m_LocalPosition.z
@@ -54,7 +54,7 @@ PrefabInstance:
     - target: {fileID: 163519630973029312, guid: a60be7148c26a524aaf13557b314717b, type: 3}
       propertyPath: m_Sprite
       value: 
-      objectReference: {fileID: 21300000, guid: 5a7eafb281d73c4419d9b1aa7a023b54, type: 2}
+      objectReference: {fileID: 6985078694907704799, guid: 9284039b9ccd2c746b686a45e902a931, type: 3}
     - target: {fileID: 163519630973029312, guid: a60be7148c26a524aaf13557b314717b, type: 3}
       propertyPath: m_WasSpriteAssigned
       value: 1
@@ -67,9 +67,25 @@ PrefabInstance:
       propertyPath: _spaceType
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 7443298820502547353, guid: a60be7148c26a524aaf13557b314717b, type: 3}
+      propertyPath: canClimb
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7443298820502547353, guid: a60be7148c26a524aaf13557b314717b, type: 3}
+      propertyPath: canWalkOn
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 7490651904074924061, guid: a60be7148c26a524aaf13557b314717b, type: 3}
       propertyPath: m_Name
       value: Digable Dirt
+      objectReference: {fileID: 0}
+    - target: {fileID: 7490651904074924061, guid: a60be7148c26a524aaf13557b314717b, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 8532913619500180319, guid: a60be7148c26a524aaf13557b314717b, type: 3}
+      propertyPath: m_Layer
+      value: 10
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a60be7148c26a524aaf13557b314717b, type: 3}

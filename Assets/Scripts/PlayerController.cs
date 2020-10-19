@@ -15,7 +15,6 @@ public class PlayerController : MonoBehaviour
     LevelMap level;
     Grid grid;
     GameObject gino;
-    string heldObjectType = null;
 
     public Vector3Int PlayerPos {get; private set;}
     
@@ -24,8 +23,10 @@ public class PlayerController : MonoBehaviour
     public bool isFacingLeft {get; private set;} = false;
     public bool isMoving {get; private set;} = false;
     public bool isPushing { get; private set; } = false;
+    //public bool isFalling { get; private set; } = false;
 
     public Interactable selected {get; set;}
+    public bool OnSolidGround { get; private set; } = true;
 
 
     // Start is called before the first frame update
@@ -34,7 +35,7 @@ public class PlayerController : MonoBehaviour
         //Vector3 myPos = transform.position;
         targetPos = transform.position; //new Vector3(Mathf.Round(myPos.x), myPos.y, myPos.z);
         playerRb = GetComponent<Rigidbody2D>();
-        animator = GetComponent<Animator>();
+        animator = GetComponentInChildren<Animator>();
         selected = null;
         grid = FindObjectOfType<Grid>();
         PlayerPos = grid.WorldToCell(transform.position);
@@ -45,9 +46,18 @@ public class PlayerController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (selected && !isMoving && !isInteracting)
+        if (isMoving || isInteracting) return;  // Let current actions play out
+        animator.SetBool("Running", false); 
+        
+        if (selected)
         {
             TryToMoveTo(grid.WorldToCell(selected.transform.position));
+        }
+        else if (!OnSolidGround)
+        {
+            print("Not on solid ground");
+            
+            Fall();
         }
     }
 
@@ -66,6 +76,8 @@ public class PlayerController : MonoBehaviour
 
     internal void TryToMoveTo(Vector3Int targetPos)
     {
+        if (isMoving || isInteracting) return;  // Let any current actions play out first
+
         Interactable nextSquare;
         int fallDist = 0, xDist = 0, yDist = 0;
         var levelMap = level.map;
@@ -91,7 +103,7 @@ public class PlayerController : MonoBehaviour
                 if (squareBelow.spaceType == SpaceType.Empty) 
                 {
                     fallDist++;
-                    if (fallDist > 1) break;    // You can only fall one square and survive
+                    //if (fallDist > 1) break;    // You can only fall one square and survive
                     Fall();
                     continue;               
                 }
@@ -118,10 +130,14 @@ public class PlayerController : MonoBehaviour
                 if (nextSquare == null) break;  // Hitting wall is a fail 
                 if (nextSquare.spaceType == SpaceType.Empty)
                 {
+                    print("Running?");
+                    animator.SetBool("Running", true);
                     MoveOneHoriz(xDist);
                 }
                 else
                 {
+                    print("Stop running?");
+                    animator.SetBool("Running", false);
                     // Handle interactions
                     if (nextSquare == selected && !isHoldingSomething)
                     {
@@ -142,7 +158,7 @@ public class PlayerController : MonoBehaviour
                     }
                     else if (nextSquare == selected)    // reached selected square while holding something
                     {
-                        if (heldObjectType == "Empty Crate" && nextSquare.spaceType == SpaceType.Dug)
+                        if (GetHeldObjectType() == "Empty Crate" && nextSquare.spaceType == SpaceType.Dug)
                         {   // Fill crate with dug dirt
                             nextSquare.ChangeContents("Full Crate");
                             level.UpdateMap(nextSquare.GridPos.x, nextSquare.GridPos.y, nextSquare);
@@ -167,6 +183,7 @@ public class PlayerController : MonoBehaviour
                 break;
             }
         }
+        //
         if (PlayerPos == targetPos || (isHoldingSomething && Math.Abs(xDist) == 1) && yDist == 0)
         {
             RemoveSelection();
@@ -256,26 +273,67 @@ public class PlayerController : MonoBehaviour
 
         if (dest?.spaceType == SpaceType.Empty) // Space directly ahead empty, drop item there
         {
-            dest.ChangeContents(heldObjectType);
+            dest.ChangeContents(GetHeldObjectType());
             level.UpdateMap(PlayerPos.x + offset, PlayerPos.y, dest);
             HoldNothing();
-
+            GravityCheck(dest);
         }
+    }
+
+    private void GravityCheck(Interactable thing)
+    {
+        while (thing.GridPos.y > 0)
+        {
+            var underneath = level.map[thing.GridPos.x, thing.GridPos.y - 1];
+            if (!underneath) return;    // No interactable underneath (typically base tile)
+
+            if (underneath.spaceType == SpaceType.Empty)
+            {
+                SwapSpaces(thing, underneath);
+                thing = underneath;
+            }
+            else if (!underneath.canWalkOn)
+            {
+                print("Dropped object landed on non-walkable space and you haven't coded behaviour for this yet!");
+                return;
+            }
+            else    // object dropped on walkable space - done falling
+            {
+                return;
+            }
+        }
+
+    }
+
+    private void SwapSpaces(Interactable space1, Interactable space2)
+    {
+        var temp = space1.name;
+        space1.ChangeContents(space2.name);
+        space2.ChangeContents(temp);
     }
 
     private void HoldNothing()
     {
         isHoldingSomething = false;
-        if (heldObjectType == "Full Crate")
+        if (GetHeldObjectType() == "Full Crate")
         { 
             isPushing = false; 
             animator.SetBool("Pushing", false);
         }
-        heldObjectType = null;
         for (int i = 0; i < heldObject.transform.childCount; i++)
         {
             heldObject.transform.GetChild(i).gameObject.SetActive(false);
         }
+    }
+
+    private string GetHeldObjectType()
+    {
+        for (int i = 0; i < heldObject.transform.childCount; i++)
+        {
+            GameObject child = heldObject.transform.GetChild(i).gameObject;
+            if (child.activeInHierarchy) return child.name;
+        }
+        return "Nothing";
     }
 
     private void GrabObject(Interactable nextSquare)
@@ -296,8 +354,12 @@ public class PlayerController : MonoBehaviour
             }
         }
         isHoldingSomething = true;
-        heldObjectType = objectName;
-        if (heldObjectType == "Full Crate") isPushing = true;
+        //print("Now holding " + objectName);
+        if (objectName == "Full Crate") 
+        {
+            isPushing = true;
+            animator.SetBool("Pushing", true);
+        }
     }
 
     private void MoveOneHoriz(int xDist)
@@ -324,7 +386,7 @@ public class PlayerController : MonoBehaviour
         isMoving = false;
         transform.position = target;
         UpdatePlayerPos();
-
+        //animator.SetBool("Running", false);
     }
 
     private IEnumerator ClimbCoroutine()
@@ -345,7 +407,7 @@ public class PlayerController : MonoBehaviour
         }
 
         transform.position = target;
-        animator.SetBool("Running",true);
+        //animator.SetBool("Running",true);
         counter = 0;
         startPos = transform.position;
         target = transform.position + (transform.localScale.x > 0 ? Vector3.right : Vector3.left);
@@ -367,12 +429,31 @@ public class PlayerController : MonoBehaviour
     {
         //print("In UpdatePlayerPos, position is " + transform.position);
         PlayerPos = grid.WorldToCell(transform.position);
+        Interactable underneath = null;
+        if (PlayerPos.y > 0)
+        {
+            underneath = level.map[PlayerPos.x, PlayerPos.y - 1];
+            print("underneath is of type " + (underneath? underneath.spaceType.ToString() : "nothing"));
+        }
+        else
+        {
+            OnSolidGround = true;
+        }
+
+        if (!underneath || underneath.canWalkOn == true)
+        {
+            OnSolidGround = true;
+        }
+        else
+        {
+            OnSolidGround = false;
+        }
     }
 
     private void Fall()
     {
         Vector3 target = transform.position + Vector3.down;
         StartCoroutine(MoveToTarget(target));
-        UpdatePlayerPos();
+        //isFalling = isMoving;
     }
 }

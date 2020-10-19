@@ -24,7 +24,7 @@ public class LevelMap : MonoBehaviour
         var interactables = GetComponentsInChildren<Interactable>();
         MaxX = interactables.Max(a => a.GridPos.x);
         MaxY = interactables.Max(a => a.GridPos.y);
-        print("LevelMap found size of " + MaxX + " : " + MaxY);
+        //print("LevelMap found size of " + MaxX + " : " + MaxY);
 
         _interactableArray = new Interactable[MaxX + 1, MaxY + 1];
         foreach (var i in interactables)

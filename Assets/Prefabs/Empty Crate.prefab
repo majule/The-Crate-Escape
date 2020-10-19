@@ -75,5 +75,13 @@ PrefabInstance:
       propertyPath: m_Name
       value: Empty Crate
       objectReference: {fileID: 0}
+    - target: {fileID: 7490651904074924061, guid: a60be7148c26a524aaf13557b314717b, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 8532913619500180319, guid: a60be7148c26a524aaf13557b314717b, type: 3}
+      propertyPath: m_Layer
+      value: 10
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: a60be7148c26a524aaf13557b314717b, type: 3}
